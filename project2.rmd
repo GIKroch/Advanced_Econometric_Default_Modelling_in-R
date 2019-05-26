@@ -19,6 +19,10 @@ library(kableExtra) # Nice tables
 library(mice) # Multivariate Imputation
 library(reshape) # Melt
 library(ggplot2) # Charts
+library(stargazer) # very nice tables
+library(sandwich) # vcovHC
+library(lmtest) #coeftest
+library(mfx) #probitmfx
 
 options(knitr.table.format = "latex")
 ```
@@ -98,7 +102,7 @@ data$attr37 <- NULL
 Attribut #37 contains 2548 values, which is almost 50% of number of rows, so we will dispose this variable. 
 After that, we used Multivariate Imputation by Chained Equations to impute missing data where possible. MI imputes the missing values multiple times, resulting in multiple full datasets. Then each dataset is analyzed and the results are combined.MI gives approximately unbiased estimates of all the estimates from the random error.
 
-```{r imputation, eval=FALSE}
+```{r imputation, include=FALSE, eval=FALSE}
 imputed_Data <- mice(data, m=5, maxit = 5, method = 'pmm', seed = 500)
 new_data <- complete(imputed_Data)
 write.csv2(new_data, "imputedData.csv", row.names = FALSE)
@@ -107,10 +111,191 @@ write.csv2(new_data, "imputedData.csv", row.names = FALSE)
 ```{r after_imputation, echo=FALSE}
 data <- read.csv2("imputedData.csv")
 missing_d <- data[rowSums(is.na(data))>0,]
-sum(missing_d$class)
+#sum(missing_d$class)
 data <- data[rowSums(is.na(data))==0,]
 ```
 
 After these operations we have only 4.81% (284) of rows which contain missing data, so we will delete them. 
 
+# 4. Model estimation
 
+In our analysis, we try to use models with Binary Dependent Variable, such as logit and probit. Our independent variables were chosen according to literature (Ohlson 1980). We tried to recreate all independent variables from Ohlson's research, leading us to eight independent variables:
+
+* SIZE - Logarithm of total assets
+* TLTA - Total liabilities divided by total assets
+* WCTA - Working capital divided by total assets
+* OENEG - One if total liabilities exceeds total assets, zero otherwise
+* NITA - Net income divided by total assets
+* INONE - One if net income was negative for the last year, zero otherwise
+* CHSALES - Change in sales for the most recent period
+* FUTL - Sum of gross profit and depreciation divided by total liabilities
+
+```{r, echo=FALSE}
+SIZE <- data$Attr29
+TLTA <- data$Attr2
+WCTA <- data$Attr3
+OENEG <- ifelse(TLTA>=1, 1, 0)
+NITA <- data$Attr1
+INONE <- ifelse(NITA>0, 1, 0)
+CHSALES <- data$Attr21
+FUTL <- data$Attr16
+BANKRUPTCY <- data$class
+
+ohl_data <- data.frame(SIZE, TLTA, WCTA, OENEG, NITA, INONE, FUTL, CHSALES, BANKRUPTCY)
+
+```
+
+```{r, results='asis', echo=FALSE}
+stargazer(ohl_data,  header=FALSE, type='latex', title = "Summary of analysed variables")
+```
+
+After wide literature review, we expect the sign of the coefficients to be as follows:
+
+```{r, echo=FALSE}
+positive = c("TLTA", "INONE", "EBIT", "", "")
+negative = c("WCTA", "NITA", "CHSALES", "SIZE", "FUTL")
+indeterminate = c("OENEG", "", "", "" ,"")
+kable(data.frame(positive, negative, indeterminate), booktabs=T, align = "c") %>%
+    kable_styling(latex_options = c("HOLD_position"), full_width = F ) 
+```
+
+## Estimation of linear probability model (OLS with White’s robust matrix)), logit model and probit model
+
+The results of estimation are in Table 2.
+
+```{r, echo=FALSE}
+lpm = lm(BANKRUPTCY~SIZE+TLTA+WCTA+OENEG+NITA+INONE+FUTL+CHSALES, data=ohl_data)
+white.lpm = vcovHC(lpm, data = olympics, type = "HC")
+coeftest(lpm, vcov=sandwich)
+myprobit <- glm(BANKRUPTCY~SIZE+TLTA+WCTA+OENEG+NITA+INONE+FUTL+CHSALES, data=ohl_data, family=binomial(link="probit"))
+mylogit <- glm(BANKRUPTCY~SIZE+TLTA+WCTA+OENEG+NITA+INONE+FUTL+CHSALES, data=ohl_data, family=binomial(link="logit"))
+```
+
+```{r results='asis', echo=FALSE}
+stargazer(lpm, myprobit, mylogit, header = F)
+```
+
+## Choice between logit and probit on the basis of information criteria
+
+We know that our binary data are not balanced (zero values are much more frequent than one values), so we can use AIC criteria to choose between logit and probit model. The AIC criterion for probit is lower than for logistic model (look at Table 2), so in our analysis we will be using probit model.
+
+## Selection of significant variables; general-to-specific method to variables selection
+
+We suspect that OENEG variable might not be signigicant. To test that, we will perform Waldtest for probit and logit model. The results of these test are in Table 3 and Table 4 respectively. P-value is above 0.05%, so we cannot reject the null hypothesis. However, removing OENEG from our model improves AIC cryteria. Therefore, we decided to remove it from the model
+
+```{r, warning=FALSE}
+myprobit2 <- glm(BANKRUPTCY~SIZE+TLTA+WCTA+NITA+INONE+FUTL+CHSALES, data=ohl_data, family=binomial(link="probit"))
+waldtest_probit <- waldtest(myprobit,myprobit2)
+mylogit2 <- glm(BANKRUPTCY~SIZE+TLTA+WCTA+NITA+INONE+FUTL+CHSALES, data=ohl_data, family=binomial(link="logit"))
+waldtest_logit <- waldtest(mylogit,mylogit2)
+```
+
+```{r results='asis', echo=FALSE}
+stargazer(waldtest_probit, waldtest_logit, header = F)
+```
+
+
+## Transformation of variables
+
+To check if any variables needs transformation, we will use loess plots for non-binary data.
+
+```{r, out.width='33%', echo=FALSE}
+cols <- c("SIZE","TLTA","WCTA","NITA","FUTL","CHSALES")
+for (i in 1:length(cols)){
+  plot(ohl_data[,cols[i]],predict(loess(ohl_data$BANKRUPTCY~ohl_data[,cols[i]])), title(cols[i]), xlab = "", ylab = "")
+}
+```
+
+Plot for SIZE shows that an assumption of a linear effect on the logit scale, is clearly not reasonable here. We will try to include a quadratic effect of SIZE in the model.
+
+```{r, include=FALSE}
+ohl_data$SIZE2 <- ohl_data$SIZE^2
+myprobit_final <- glm(BANKRUPTCY~SIZE+TLTA+WCTA+NITA+INONE+FUTL+SIZE2+CHSALES, data=ohl_data, family=binomial(link="probit"))
+```
+
+```{r, include=FALSE}
+# ohl_data$FUTL_1 <- ifelse(ohl_data$FUTL<0, ohl_data$FUTL, 0)
+# ohl_data$FUTL_2 <- ifelse(ohl_data$FUTL>=0, ohl_data$FUTL, 0)
+# 
+# myprobit_final <- glm(BANKRUPTCY~SIZE+TLTA+WCTA+NITA+INONE+FUTL_1+FUTL_2+SIZE2+CHSALES, data=ohl_data, family=binomial(link="probit"))
+```
+
+
+We also suspect that there might be interactions needed in our model. We excluded the list of possible pairs that have some scientific basis:
+
+* CHSALES:INONE
+* CHSALES:NITA
+* NITA:INONE
+* SIZE:TLTA
+
+```{r interactions}
+myprobit2 <- glm(BANKRUPTCY~SIZE+TLTA+WCTA+OENEG+NITA+FUTL+SIZE2+CHSALES+CHSALES:INONE, data=ohl_data, family=binomial(link="probit"))
+lrtest(myprobit2, myprobit_final)
+myprobit3 <- glm(BANKRUPTCY~SIZE+TLTA+WCTA+OENEG+INONE+FUTL+SIZE2+CHSALES+CHSALES:NITA, data=ohl_data, family=binomial(link="probit"))
+lrtest(myprobit3, myprobit_final)
+myprobit3 <- glm(BANKRUPTCY~SIZE+TLTA+WCTA+OENEG+NITA+FUTL+SIZE2+CHSALES+NITA:INONE, data=ohl_data, family=binomial(link="probit"))
+lrtest(myprobit3, myprobit_final)
+myprobit3 <- glm(BANKRUPTCY~SIZE+TLTA+WCTA+OENEG+NITA+FUTL+SIZE2+CHSALES+NITA:INONE, data=ohl_data, family=binomial(link="probit"))
+lrtest(myprobit3, myprobit_final)
+```
+
+None of the interactions seem to be significant, so we will not include interactions in our model.
+
+```{r interactions2, eval=FALSE, include=FALSE}
+# BRAK INTERAKCJI
+cols_to_test <- colnames(ohl_data)
+cols_to_test <- cols_to_test[-9]
+for (i in 1:length(cols_to_test)){
+  cols_to_formula <- cols_to_test[-i]
+  for (j in 1:length(cols_to_formula)){
+    test_formula <- paste("BANKRUPTCY~", paste(cols_to_formula, collapse = "+"), "+", cols_to_formula[j], ":", cols_to_test[i], sep = "")
+    test_probit <- glm(test_formula, data=ohl_data, family=binomial(link="probit"))
+    like_test <- lrtest(test_probit, myprobit_final)
+    p_val <- like_test$`Pr(>Chisq)`[2]
+    if (p_val > 0.05) {
+      print("FOUND IT: ", paste(cols_to_formula[j], ":", cols_to_test[i], sep = ""))
+    }
+  }
+  
+}
+```
+
+
+
+## The final model 
+
+```{r results='asis', echo=FALSE}
+stargazer(lpm, myprobit, mylogit, myprobit_final, header = F)
+```
+
+
+## Marginal effects for the final model
+
+```{r}
+# marginal effects for the average observation
+(meff = probitmfx(formula=BANKRUPTCY~SIZE+TLTA+WCTA+NITA+INONE+FUTL+SIZE2+CHSALES, data=ohl_data, atmean=TRUE))
+```
+
+
+## Calculation and interpretation of odds ratios
+
+
+
+## Linktest
+
+```{r}
+ohl_data$yhat = log(myprobit_final$fitted.values/(1-myprobit_final$fitted.values))
+ohl_data$yhat2 = ohl_data$yhat^2
+aux.reg = glm(BANKRUPTCY~yhat+yhat2, data=ohl_data, family=binomial(link="probit"))
+summary(aux.reg)
+# yhat2 nieistotne, wiec dobra formula modelu
+```
+
+## Intepretation of R squared
+
+
+
+
+## Hypotheses verification
+
+## Tests
