@@ -18,18 +18,31 @@ In the business world it is important to know if the company you are dealing wit
 
 > \center __H1:__ *Financial indicators can't be used as default predictors*  
 
+# Literature review
 
+# Data Analysis
 
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = TRUE)
+library(foreign)
 ```
 
 
-```{r cars}
-
+```{r read_data}
+data <- read.arff("5year.arff")
+colnames <- as.character(read.csv2("column_names.csv", header = FALSE)$V2)
+colnames(data) <- c(colnames, "bankruptcy")
+data$bankruptcy <- as.numeric(data$bankruptcy)
+data$bankruptcy <- ifelse(data$bankruptcy==2,1,0)
 ```
 
-```{r pressure, echo=FALSE}
-plot(pressure)
+
+```{r missing_data}
+na_count_cols <- data.frame(sapply(data, function(y) sum(length(which(is.na(y))))))
+na_count_rows <- data.frame(apply(data, 1, function(y) sum(length(which(is.na(y))))))
 ```
 
+# Research
+
+
+# Summary

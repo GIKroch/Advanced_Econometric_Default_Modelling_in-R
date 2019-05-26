@@ -1,0 +1,64 @@
+1;net profit / total assets 
+2;total liabilities / total assets 
+3;working capital / total assets 
+4;current assets / short-term liabilities 
+5;[(cash + short-term securities + receivables - short-term liabilities) / (operating expenses - depreciation)] * 365 
+6;retained earnings / total assets 
+7;EBIT / total assets 
+8;book value of equity / total liabilities 
+9;sales / total assets 
+10;equity / total assets 
+11;(gross profit + extraordinary items + financial expenses) / total assets 
+12;gross profit / short-term liabilities 
+13;(gross profit + depreciation) / sales 
+14;(gross profit + interest) / total assets 
+15;(total liabilities * 365) / (gross profit + depreciation) 
+16;(gross profit + depreciation) / total liabilities 
+17;total assets / total liabilities 
+18;gross profit / total assets 
+19;gross profit / sales 
+20;(inventory * 365) / sales 
+21;sales (n) / sales (n-1) 
+22;profit on operating activities / total assets 
+23;net profit / sales 
+24;gross profit (in 3 years) / total assets 
+25;(equity - share capital) / total assets 
+26;(net profit + depreciation) / total liabilities 
+27;profit on operating activities / financial expenses 
+28;working capital / fixed assets 
+29;logarithm of total assets 
+30;(total liabilities - cash) / sales 
+31;(gross profit + interest) / sales 
+32;(current liabilities * 365) / cost of products sold 
+33;operating expenses / short-term liabilities 
+34;operating expenses / total liabilities 
+35;profit on sales / total assets 
+36;total sales / total assets 
+37;(current assets - inventories) / long-term liabilities 
+38;constant capital / total assets 
+39;profit on sales / sales 
+40;(current assets - inventory - receivables) / short-term liabilities 
+41;total liabilities / ((profit on operating activities + depreciation) * (12/365)) 
+42;profit on operating activities / sales 
+43;rotation receivables + inventory turnover in days 
+44;(receivables * 365) / sales 
+45;net profit / inventory 
+46;(current assets - inventory) / short-term liabilities 
+47;(inventory * 365) / cost of products sold 
+48;EBITDA (profit on operating activities - depreciation) / total assets 
+49;EBITDA (profit on operating activities - depreciation) / sales 
+50;current assets / total liabilities 
+51;short-term liabilities / total assets 
+52;(short-term liabilities * 365) / cost of products sold) 
+53;equity / fixed assets 
+54;constant capital / fixed assets 
+55;working capital 
+56;(sales - cost of products sold) / sales 
+57;(current assets - inventory - short-term liabilities) / (sales - gross profit - depreciation) 
+58;total costs /total sales 
+59;long-term liabilities / equity 
+60;sales / inventory 
+61;sales / receivables 
+62;(short-term liabilities *365) / sales 
+63;sales / short-term liabilities 
+64;sales / fixed assets
