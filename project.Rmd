@@ -1,0 +1,35 @@
+---
+title: "econometrics_model"
+output:
+  pdf_document: default
+header-includes:
+    - \usepackage{setspace}\onehalfspacing
+    - \usepackage{float}
+    - \newcommand{\bcenter}{\begin{center}}
+    - \newcommand{\ecenter}{\end{center}}
+fontsize: 12pt
+---
+
+# Introduction
+
+In the business world it is important to know if the company you are dealing with is now and is going to be in the future in good financial condition. Therefore, the way to predict the company's default has been the subject of interest for researchers for many years. The first important model to predict corporate bancruptcy was Altman's Z-Score model from 1968 (Altman, 1968). Since than many papers occured which were focusing this issue with different approaches. The techniques has evolved from Multidimensional Analysis proposed by Altman, through Logit (Ohlson, 1980) and Probit (Zmijewski, 1984) models, to modern solutions which incorporate highly developed Machine Learning techniques like Ensemble Boosted Trees(Tomczak et al., 2016). In our work we want to focus on Logit/Probit strategy of modelling company's default. Before the modelling part there is an obvious need to define main and the secondary hypothesis. In our case they are:    
+
+> \center __H0:__ *It is possible to predict company's default with specific financial indicators achieved by particular company*
+
+> \center __H1:__ *Financial indicators can't be used as default predictors*  
+
+
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+
+```{r cars}
+
+```
+
+```{r pressure, echo=FALSE}
+plot(pressure)
+```
+
