@@ -22,6 +22,7 @@ library(stargazer) # very nice tables
 library(sandwich) # vcovHC
 library(lmtest) #coeftest
 library(mfx) #probitmfx
+library(DescTools) #PseudoR2
 
 options(knitr.table.format = "latex")
 ```
@@ -203,7 +204,7 @@ stargazer(waldtest_probit, waldtest_logit, header = F)
 
 \indent To check if any variables needs transformation, we will use loess plots for non-binary data.
 
-```{r, out.width='0,33%', echo=FALSE, fig.pos = "H"}
+```{r, out.width='33%', echo=FALSE}
 cols <- c("SIZE","TLTA","WCTA","NITA","FUTL","CHSALES")
 for (i in 1:length(cols)){
   plot(ohl_data[,cols[i]],predict(loess(ohl_data$BANKRUPTCY~ohl_data[,cols[i]])), title(cols[i]), xlab = "", ylab = "")
@@ -273,18 +274,17 @@ for (i in 1:length(cols_to_test)){
 ```
 
 
-
 ## 4.5. The final model 
-
 ```{r results='asis', echo=FALSE}
-stargazer(lpm, myprobit, mylogit, myprobit_final, header = F, table.placement = "H")
+stargazer(lpm, myprobit, mylogit, myprobit_final, header = F, table.placement = "H", float = T)
 ```
-\pagebreak
+
+Above we present the comparison of models tested in this analysis. Where the number four is our final model.    
 
 ## 4.6. Marginal effects for the final model
 
 \indent We are going to calculate so called Marginal Effects at the Means
-```{r, warning = F}
+```{r, warning = F, echo = F}
 
 meff = probitmfx(formula=BANKRUPTCY~SIZE+TLTA+WCTA+NITA+INONE+FUTL+SIZE2+CHSALES, 
                   data=ohl_data, atmean=TRUE)
@@ -307,6 +307,32 @@ We will consider only those marginal effects for variables which occured to be s
 
 ## 4.7. Calculation and interpretation of odds ratios
 
+\indent In this chapter we will analyse odds ratios of the model. We will also include 95% LR confidence intervals of odds.  
+```{r, echo = F}
+odds_ratios <-   exp(coef(myprobit_final))
+
+
+conf_interval <- suppressWarnings(exp(confint(myprobit_final)))
+
+res <- cbind(as.data.frame(odds_ratios), conf_interval)
+
+res
+
+```
+\noindent Similary as in 4.6 we fill focus only on variables which were significant in the Probit model. First we will analyse the only one dependent variable which is discrete: 
+
+* INONE - Odd ratio here tells us that the company with a positive net income for previouse year is 2 times less likely to go bankrupt than the one with a negative net income
+
+Other variables are continous:
+
+* TLTA - If TLTA increases by 1 the odds of company's default increases by 1,08 times
+
+* WCTA - If WCTA increases by 1 the odds of company's default decreases by 1/0,58 = 1,72 times  
+
+* FUTL - If FUTL increases by 1 the odds of company's default decreases by 1/0,82 = 1,22 times
+
+* CHSALES - If CHSALES incraeses by 1 the odds of company's default decreases by 1/0,5 = 2 times
+
 
 
 ## 4.8. Linktest
@@ -320,11 +346,39 @@ summary(aux.reg)
 ```
 \noindent It occurs that yhat2 is not significant. That indicates that the chosen model formula is correct. 
 
-## Intepretation of R squared
+## 4.9. Intepretation of R squared
 
+When dealing with regression where the dependent variable is not continous the interpretation of R-squared is not straightforward as in case of linear regression. To get a wider understanding of how the model we prepared fits our data we will use three different pseudo R-squared measures: Count R^2 Nagelkerke/Cragg & Uhler R^2 and McFadden's
 
+1. Count R^2 is equal
+```{r, echo = F}
+# The code was taken from:
+#://stats.stackexchange.com/questions/160709/how-do-you-get-count-r2-in-r-with-missing-data
+countR2<-function(m) mean(m$y==round(m$fitted.values))
 
+countR2(myprobit_final)
+```
+We get a really high value of Count R^2 what tells us what percent of dependent variable's value we can predict with coefficients we got from the model. However the high value is optimistic, it is unfortunatelly the limitation of Count R^2 that if one value of dependent variable occurs much more often than another one the R^2 will surely be high (Strawiński). That is why some other measures should be introduced.
+
+As the next value we decided to use Nagelkere's Pseudo R^2 because of its [0,1] interval which makes it comfortable to interpret:
+```{r, echo = F}
+PseudoR2(myprobit_final,which = "Nagelkerke")
+```
+This value we can interpret that our model fully predicts 27% of the outcome. 
+
+The last one measure used is McFadden's:
+```{r, echo = F}
+PseudoR2(myprobit_final)
+```
+What does this value tell us about the predictive accuracy of our model? According to McFadden when his Pseudo R^2 is in range 0.2-0.4 it means a really good fit. And it is normal situation that this type of R^2 does not "behave" as well as this one from linear regression (McFadden, 1977)
 
 ## Hypotheses verification
 
 ## Tests
+
+\begin{thebibliography}{9}
+\bibitem{latexcompanion} 
+xxx
+\textit{The \LaTeX\ Companion}. 
+yyy, Reading, Massachusetts, 1993.
+\end{thebibliography}
