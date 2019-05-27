@@ -19,6 +19,7 @@ In the business world it is important to know if the company you are dealing wit
 
 > \center __H1:__ *Financial indicators can't be used as default predictors*  
 
+<<<<<<< HEAD
 As it was stated before, it is very important for a market's health to be able to predict particular company's default with available financial indicators. It is crucial not only for investors who surely do not want to invest in companies which are going to go bankrupt but it is also really important for the whole country's economy. With the knowledge what financial indicators can predict company's default it would allow the policy makers to concentrate on this indicators and so on be able to prevent bankruptcies which would be especially important in case of major companies. 
 
 Some imporant works in the area of bankruptcy prediction were already mentioned. However this issue is deeply analysed in __Chapter 2__. In __Chapter 3__ there is a description of a data set we have chosen for our modelling. Also in this part we introduce data processing and feature selection to properly conduct our study. In __Chapter 4__ we make a choice between Probit and Logit model before running the model. 
@@ -56,14 +57,36 @@ Coming back to the models which are the most important for this paper we are foc
 
 # 3. Data 
 
+=======
+# Literature review
+>>>>>>> cc6a11bc17789b1aa11da738bc08c6aa8ddd1421
 
+# Data Analysis
 
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = TRUE)
+library(foreign)
 ```
 
 
-```{r cars}
-
+```{r read_data}
+data <- read.arff("5year.arff")
+colnames <- as.character(read.csv2("column_names.csv", header = FALSE)$V2)
+colnames(data) <- c(colnames, "bankruptcy")
+data$bankruptcy <- as.numeric(data$bankruptcy)
+data$bankruptcy <- ifelse(data$bankruptcy==2,1,0)
 ```
 
+<<<<<<< HEAD
+=======
+
+```{r missing_data}
+na_count_cols <- data.frame(sapply(data, function(y) sum(length(which(is.na(y))))))
+na_count_rows <- data.frame(apply(data, 1, function(y) sum(length(which(is.na(y))))))
+```
+
+# Research
+
+
+# Summary
+>>>>>>> cc6a11bc17789b1aa11da738bc08c6aa8ddd1421
