@@ -23,6 +23,7 @@ library(sandwich) # vcovHC
 library(lmtest) #coeftest
 library(mfx) #probitmfx
 library(DescTools) #PseudoR2
+library(ResourceSelection) #gof
 
 options(knitr.table.format = "latex")
 ```
@@ -30,12 +31,11 @@ options(knitr.table.format = "latex")
 
 # 1. Introduction  
 
-In the business world it is important to know if the company you are dealing with is now and is going to be in the future in a good financial condition. Therefore, the way to predict the company's default has been the subject of interest for researchers for many years. The first important model to predict corporate bancruptcy was Altman's Z-Score model from 1968 (Altman, 1968). Since than many papers occured which were focusing this issue with different approaches. The techniques has evolved from Multidimensional Analysis proposed by Altman, through Logit (Ohlson, 1980) and Probit (Zmijewski, 1984) models, to modern solutions which incorporate highly developed Machine Learning techniques like Ensemble Boosted Trees(Tomczak et al., 2016). In our work we want to focus on Logit/Probit strategy of modelling company's default. Before the modelling part there is an obvious need to define main and the secondary hypothesis. In our case they are:    
+In the business world it is important to know if the company you are dealing with is now and is going to be in the future in a good financial condition. Therefore, the way to predict the company's default has been the subject of interest for researchers for many years. The first important model to predict corporate bancruptcy was Altman's Z-Score model from 1968 (Altman, 1968). Since than many papers occured which were focusing this issue with different approaches. The techniques has evolved from Multidimensional Analysis proposed by Altman, through Logit (Ohlson, 1980) and Probit (Zmijewski, 1984) models, to modern solutions which incorporate highly developed Machine Learning techniques like Ensemble Boosted Trees(Tomczak et al., 2016). In our work we want to focus on Logit/Probit strategy of modelling company's default. Before the modelling part there is an obvious need to define our research questions:
 
-> \center __H0:__ *It is possible to predict company's default with specific financial indicators achieved by particular company*
+1. *Is it possible to predict company's default with specific financial indicators achieved by particular company?*
 
-> \center __H1:__ *Financial indicators can't be used as default predictors*  
-
+2. *Do financial indicators affect the probability of company's default in line with relationships known in literature?* - We will test that by checking if all betas in our model are jointly significant. Thus our null hypothesis is as follows: H0: All betas in our model are jointly significant. After that we will see if the significant coefficients signs are as expected.
 
 As it was stated before, it is very important for a market's health to be able to predict particular company's default with available financial indicators. It is crucial not only for investors who surely do not want to invest in companies which are going to go bankrupt but it is also really important for the whole country's economy. With the knowledge what financial indicators can predict company's default it would allow the policy makers to concentrate on this indicators and so on be able to prevent bankruptcies which would be especially important in case of major companies. 
 
@@ -153,9 +153,9 @@ stargazer(ohl_data,  header=FALSE, type='latex', title = "Summary of analysed va
 \noindent After wide literature review, we expect the sign of the coefficients to be as follows:
 
 ```{r, echo=FALSE}
-positive = c("TLTA", "INONE", "EBIT", "", "")
-negative = c("WCTA", "NITA", "CHSALES", "SIZE", "FUTL")
-indeterminate = c("OENEG", "", "", "" ,"")
+positive = c("TLTA", "", "", "", "", "")
+negative = c("WCTA", "NITA", "INONE", "CHSALES", "SIZE", "FUTL")
+indeterminate = c("OENEG", "", "", "" ,"", "")
 kable(data.frame(positive, negative, indeterminate), booktabs=T, align = "c") %>%
     kable_styling(latex_options = c("HOLD_position"), full_width = F ) 
 ```
@@ -279,7 +279,18 @@ for (i in 1:length(cols_to_test)){
 stargazer(lpm, myprobit, mylogit, myprobit_final, header = F, table.placement = "H", float = T)
 ```
 
-Above we present the comparison of models tested in this analysis. Where the number four is our final model.    
+Above we present the comparison of models tested in this analysis. Where the number four is our final model.   
+
+Now we will try to see if financial indicators affect the probability of company's default in line with relationships known in literature. We will only interpret signs of coefficiants that are statistically significant:
+
+* TLTA - the sign of the coefficient is positive, what was expected
+* WCTA - the sign of the coefficient is negative, what was expected
+* NITA - the sign of the coefficient is positive, what was not expected
+* INONE - the sign of the coefficient is negative, what was expected
+* FUTL - the sign of the coefficient is negative, what was expected
+* CHSALES - the sign of the coefficient is negative, what was expected
+
+Not every coefficient sign is in line with the literature. A possible explanation for that is that there is some significant variable that we omitted or that there is some interaction that we missed.
 
 ## 4.6. Marginal effects for the final model
 
@@ -372,9 +383,29 @@ PseudoR2(myprobit_final)
 ```
 What does this value tell us about the predictive accuracy of our model? According to McFadden when his Pseudo R^2 is in range 0.2-0.4 it means a really good fit. And it is normal situation that this type of R^2 does not "behave" as well as this one from linear regression (McFadden, 1977)
 
-## Hypotheses verification
+## 4.10. Hosmer-Lemeshow test
 
-## Tests
+The Hosmer-Lemeshow is useful in assesing goodness of fit test for logistic regression.
+
+```{r, echo=FALSE}
+hl <- hoslem.test(myprobit_final$y, fitted(myprobit_final), g=10)
+hl
+```
+P-value of the test is 0.2428 which is above our significance level. This means that we can not rejest null hypothesis that the model is correctly specified.
+
+## 4.11. Testing hypotheses
+
+To test whether all of betas in our model are jointly significant, we will use likelihood ratio test.
+
+```{r}
+(with(myprobit_final, pchisq(null.deviance - deviance, df.null - df.residual, lower.tail = FALSE)))
+```
+P-value is close to 0, so we can reject the null hypothesis that model with predictors does not fit significantly better than a model with just an intercept. 
+
+
+## Conclusions
+
+In our analysis, we concluded that an econometrics model can be useful in predicting whether a company will default next year. What's more, the relationships between financial indicators and the probability of default are in line with the dependencies known in litearature. 
 
 \begin{thebibliography}{9}
 \bibitem{latexcompanion} 
