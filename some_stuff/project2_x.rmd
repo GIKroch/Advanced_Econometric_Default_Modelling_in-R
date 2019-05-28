@@ -1,16 +1,16 @@
 ---
-title: "Probit in Corporate Bankruptcy Prediction - Modified Ohlson's Model"
-author: "Grzegorz Krochmal and Katarzyna Krynska"
+title: "econometrics_model"
+author: "Grzegorz Krochmal and Katarzyna Kryńska"
 output:
   pdf_document: default
 header-includes:
     - \usepackage{setspace}\onehalfspacing
     - \usepackage{float}
     - \usepackage{indentfirst}
+    - \usepackage{hyperref}
 fontsize: 12pt
 indent: true 
-abstract: "This paper tries to adjust popular corporate bankruptcy model - Ohlson's Model which was created in 1980 to the modern applications. We use Polish companies bankruptcy Data Set which was created by researchers from Wroclaw University of Science and Technology. In our analysis we switched from logit which was used in original model to probit. The results of the modelling occured to be satisfying. Model passed important tests and the obtained coefficients' and marginal effects' signs were consistent with the theory and intuition. Although the Modified Ohlson's Model performance is good there is a place for its improvement with adding some additional variables selected with modern computational tools (e.g. stepwise feature selection). " 
-
+abstract: wowowowow
 ---
 
 ```{r setup, include=FALSE}
@@ -25,8 +25,6 @@ library(sandwich) # vcovHC
 library(lmtest) #coeftest
 library(mfx) #probitmfx
 library(DescTools) #PseudoR2
-library(ResourceSelection) #gof
-library(caret)
 
 options(knitr.table.format = "latex")
 ```
@@ -34,28 +32,29 @@ options(knitr.table.format = "latex")
 
 # 1. Introduction  
 
-In the business world it is important to know if the company you are dealing with is now and is going to be in the future in a good financial condition. Therefore, the way to predict the company's default has been the subject of interest for researchers for many years. The first important model to predict corporate bancruptcy was Altman's Z-Score model from 1968 (Altman, 1968). Since than many papers occured which were focusing this issue with different approaches. The techniques has evolved from Multidimensional Analysis proposed by Altman, through Logit (Ohlson, 1980) and Probit (Zmijewski, 1984) models, to modern solutions which incorporate highly developed Machine Learning techniques like Ensemble Boosted Trees(Tomczak et al., 2016). In our work we want to focus on Logit/Probit strategy of modelling company's default. The analysis will be based on Ohlson's model modification which we introduce to suit our data in a best possible way. Before the modelling part there is an obvious need to define our research questions:
+In the business world it is important to know if the company you are dealing with is now and is going to be in the future in a good financial condition. Therefore, the way to predict the company's default has been the subject of interest for researchers for many years. The first important model to predict corporate bancruptcy was Altman's Z-Score model from 1968 (Altman, 1968). Since than many papers occured which were focusing this issue with different approaches. The techniques has evolved from Multidimensional Analysis proposed by Altman, through Logit (Ohlson, 1980) and Probit (Zmijewski, 1984) models, to modern solutions which incorporate highly developed Machine Learning techniques like Ensemble Boosted Trees(Tomczak et al., 2016). In our work we want to focus on Logit/Probit strategy of modelling company's default. Before the modelling part there is an obvious need to define main and the secondary hypothesis. In our case they are:    
 
-1. *Is Ohlson's type model still a good predictor of financial default. Can it extract the whole data potential?*
+> \center __H0:__ *It is possible to predict company's default with specific financial indicators achieved by particular company*
 
-2. *Do financial indicators affect the probability of company's default in line with relationships known in literature?* - We will test that by checking if all betas in our model are jointly significant. Thus our null hypothesis is as follows: H0: All betas in our model are jointly significant. After that we will see if the significant coefficients signs are as expected.
+> \center __H1:__ *Financial indicators can't be used as default predictors*    
 
-As it was stated before, it is very important for a market's health to be able to predict particular company's default with available financial indicators. It is crucial not only for investors who surely do not want to invest in companies which are going to go bankrupt but it is also really important for the whole country's economy. With the knowledge which financial indicators can predict company's default, it would allow the policy makers to concentrate on those indicators and make them  able to prevent bankruptcies. 
 
-Some imporant works in the area of bankruptcy prediction were already mentioned. However this issue is deeply analysed in __Chapter 2__. In __Chapter 3__ there is a description of a data set we have chosen for our modelling. Also in this part we introduce data processing and feature selection to properly conduct our study. In __Chapter 4__ there is whole modelling and testing process described. In __Chapter 5__ results of analysis are included. In __Chapter 6__ there is a conclusion. 
+As it was stated before, it is very important for a market's health to be able to predict particular company's default with available financial indicators. It is crucial not only for investors who surely do not want to invest in companies which are going to go bankrupt but it is also really important for the whole country's economy. With the knowledge what financial indicators can predict company's default it would allow the policy makers to concentrate on this indicators and so on be able to prevent bankruptcies which would be especially important in case of major companies. 
 
-\newpage
+Some imporant works in the area of bankruptcy prediction were already mentioned. However this issue is deeply analysed in __Chapter 2__. In __Chapter 3__ there is a description of a data set we have chosen for our modelling. Also in this part we introduce data processing and feature selection to properly conduct our study. In __Chapter 4__ we make a choice between Probit and Logit model before running the model. 
+
+
 # 2. Literature Review
 
-In the introduction few important works which challenged the problem of prediction of corporate bankruptcy were briefly mentioned. It all started with Altman's Multidemsional Analysis (Altman, 1968). Later numerous different ideas were introduce to solve the task of a proper prediction of bankruptcies. The works which are important for our analysis are ones which incorporate Logit (Ohlson, 1980) and Probit (Zmijewski, 1984). Obviously, it is important to state that those approaches are rather old and they do not keep up to the newest strategies. Currently, where the computing power is huge, few modern techniques of bankruptcy prediction were proposed: 
+In the introduction few important works which challenged the problem of prediction of corporate bankruptcy were briefly mentioned. It all started with Altman's Multidemsional Analysis (Altman, 1968). Later many different ideas were introduce to solve the task of a proper prediction of bankruptcies. The works which are important for our analysis are ones which incorporate Logit (Ohlson, 1980) and Probit (Zmijewski, 1984). Obviously, it is important to state that those approaches are rather old and they do not keep up to the newest strategies. Currently, where the computing power is huge few modern techniques of bankruptcy prediction were proposed: 
 
 1. Rough Sets (Dimitras et al., 1999)
 2. Evolutionary Programming (Zhang et al., 2013)
 3. Ensemble Boosted Trees with Synthetic Features Generation (Tomczak et al., 2016)
 4. Support Vector Machines (Shin et al., 2005)
 
-However those methods can overcome the shortcomings of older approaches they are surely much more demanding. For example the SVM method, which prediction power seems to be worse only than the Ensamble Boosted Trees method, requires the function hand-tuning, which makes it a tough tool for everyday business applications (Tomczak et al., 2016).  
-Coming back to the models, which are the most important for this paper, we are focusing on Ohlson's and Zmijewski's works. The Ohlson model is based on Logit. Beneath we present the list of variables Ohlson used in his analysis (Grice & Dugan, 2003):  
+However those methods can overcome the shortcomings of older approaches there are surely much more demanding. For example the SVM method which prediction power seems to be worse only than the Ensamble Boosted Trees method requires the function hand-tuning which makes it a tough tool for everyday business applications (Tomczak et al., 2016).  
+Coming back to the models which are the most important for this paper we are focusing on Ohlson's And Zmijewski's works. The Ohlson model is based on Logit. Beneath we present the list of variables Ohlson used in his analysis (Grice & Dugan, 2003):  
   
 * Y = The probability of membership in the bankrupt group based on a logistic function
 * X1 = log (total assets/GNP price-level index) 
@@ -68,19 +67,18 @@ Coming back to the models, which are the most important for this paper, we are f
 * X8 = one if net income was negative for the last two years, zero otherwise
 * X9 = measure of change in net income,1 and Y = overall index.
 
-\noindent It is important to indicate that Ohlson selected mentioned variables in an arbitrary way, just choosing those which were most frequently mentioned in literature. This limitation is also the case with model proposed by Zmijewski. The researcher applied such variables: 
+\noindent It is important to indicate that Ohlson selected mentioned variables in an arbitrary way, just choosing those which were most frequently mentioned in literature. It is some limitation which we will try to deal with in modelling part. This limitation is also the case with model proposed by Zmijewski. The researcher applied such variables: 
 
 * Y = overall index
 * X1 = net income/total assets
 * X2 = total debt/total assets
 * X3 = current assets/current liabilities
 
-\noindent They were all selected because of their importance in similar previous works. Additionaly, what has to be said about both models' shortcomings is the fact that the coefficients coming from the models are highly dependable on the data. So basically the models have to be retrained for every time period which is measured to obtain realiable results (Grice & Dugan, 2003). In our case it is not a significant problem but might be with huge datasets in business aplications. What might also be an important issue with those models is the fact that the dependent variables are selected arbitraty and their number is seriously limited. Nevertheless mentioned issues, both models still seem to be interesting and valuable. Due to the fact that Zmijewski's model incorporates only 3 independent variables it is Ohlson's model we focus on. 
+\noindent They were all selected because of their importance in similar previous works. Additionaly, what has to be said about both models' shortcomings is the fact that the coefficients coming from the models are highly dependable on the data. So basically the models have to be retrained for every time period which is measured to obtain realiable results (Grice & Dugan, 2003). In our case it is not a significant problem but might be with huge datasets in business aplications. What might also be an important issue with those models is the fact that the dependent variables are selected arbitraty and their number is seriously limited. Nevertheless mentioned issues, both models still seem to be interesting and valuable. Now it is all the matter of the dataset how well those models are going to perform and eventually how we can improve them. 
 
-\newpage
 # 3. Data description and analysis  
   
-\indent The analysed Data Set - Polish companies bankruptcy data - was created by Sebastian Tomczak and coworkers from Wroclaw University of Technology. In our analysis we used financial rates from 5th year of the forecasting period that holds information about bankruptcy status after 1 year. We chose this dataset as it is the least imbalanced of all provided. This dataset contains 64 attributes and 5910 instances (financial statements) where 410 represent bankrupted firms and 5500 companies that did not bankrupt.
+\indent The analysed Data Set - Polish companies bankruptcy data - was created by Sebastian Tomczak and is about bankruptcy prediction of Polish companies. In our analysis we used financial rates from 5th year of the forecasting period that holds information about bankruptcy status after 1 year. We chose this dataset as it is the least imbalanced of all provided. This dataset contains 64 attributes and 5910 instances (financial statements) where 410 represent bankrupted firms and 5500 companies that did not bankrupt.
 
 ```{r read_data, include=FALSE}
 data <- read.arff("5year.arff")
@@ -90,7 +88,7 @@ data$class <- as.numeric(data$class)
 data$class <- ifelse(data$class==2,1,0)
 ```
 
-This dataset contains missing values. Firstly, we will look at columns to see which contain the biggest number of missing values.
+This dataset contains missing values. Firstly, we will look at columns to see which contain the most missing values.
 
 ```{r missing_data, echo=FALSE}
 
@@ -121,7 +119,6 @@ data <- data[rowSums(is.na(data))==0,]
 
 \indent After these operations we have only 4.81% (284) of rows which contain missing data, so we will delete them. 
 
-\newpage
 # 4. Model estimation
 
 In our analysis, we try to use models with Binary Dependent Variable, such as logit and probit. Our independent variables were chosen according to literature (Ohlson 1980). We tried to recreate all independent variables from Ohlson's research, leading us to eight independent variables:
@@ -158,9 +155,9 @@ stargazer(ohl_data,  header=FALSE, type='latex', title = "Summary of analysed va
 \noindent After wide literature review, we expect the sign of the coefficients to be as follows:
 
 ```{r, echo=FALSE}
-positive = c("TLTA", "", "", "", "", "")
-negative = c("WCTA", "NITA", "INONE", "CHSALES", "SIZE", "FUTL")
-indeterminate = c("OENEG", "", "", "" ,"", "")
+positive = c("TLTA", "INONE", "EBIT", "", "")
+negative = c("WCTA", "NITA", "CHSALES", "SIZE", "FUTL")
+indeterminate = c("OENEG", "", "", "" ,"")
 kable(data.frame(positive, negative, indeterminate), booktabs=T, align = "c") %>%
     kable_styling(latex_options = c("HOLD_position"), full_width = F ) 
 ```
@@ -178,11 +175,11 @@ mylogit <- glm(BANKRUPTCY~SIZE+TLTA+WCTA+OENEG+NITA+INONE+FUTL+CHSALES, data=ohl
 ```
 
 
-\noindent After running the code for probit and logit warnings occured. We have intentionally left them visible (first two are for probit, the last one for logit). The first one is just some computional warning of the function. It is about the number of iterations the glm probit is about to handle. The other two warnings (they are actually the same warning for different functions) indicate that we might be dealing with so called perfect or quasi perfect separation. To deal with this issue we could use Logistic Regression with Firth's Bias Reduction (Firth, 1993) which should eliminate this problem. However there is a question whether we should try to deal with this at all. The perfect separation might not be the effect of some defect of our data sample but that just might be an expected outcome for a whole population. In our case we decided that perfect separation in our data can be a reflection of the whole population of companies. It is possible that the companies which go bankrupt have all the financial indicators worse than the healthy one competitors. That is why we decided to stay with standard logit/probit and omit the verion with Firth's Bias Reduction. However the Firth's approach is interesting and might be the case of interest in future studies in the area of corporate bankruptcies. 
+\noindent After running the code for probit and logit warnings occured. We have intentionally left them visible (first two are for probit, the last one for logit). The first one is just some computional warning of the function. It is about the number of iterations the glm probit is about to handle. The other two warnings (they are actually the same warning for different functions) indicate that we might be dealing with so called perfect or quasi perfect separation. To deal with this issue we could use Logistic Regression with Firth's Bias Reduction (Firth, 1993) which which would eliminate this. However there is a question whether we should try to deal with this at all. The perfect separation might not be the effect of some problem with our data sample but that just might be an expected outcome for a whole population. In our case we decided that perfect separation in our data can be a reflection of the whole population of companies. It is possible that the companies which go bankrupt have all the financial indicators worse than the healthy one competitors. That is why we decide to stay with standard logit/probit and omit the verion with Firth's Bias Reduction. However the Firth's approach is interesting and might be the case of interest in future studies in the area of corporate bankruptcies. 
 
 \indent
 ```{r results='asis', echo=FALSE}
-stargazer(lpm, myprobit, mylogit, header = F, table.placement = "H")
+stargazer(lpm, myprobit, mylogit, header = F)
 ```
 
 ## 4.2. Choice between logit and probit on the basis of information criteria
@@ -284,18 +281,7 @@ for (i in 1:length(cols_to_test)){
 stargazer(lpm, myprobit, mylogit, myprobit_final, header = F, table.placement = "H", float = T)
 ```
 
-Above we present the comparison of models tested in this analysis. Where the number four is our final model.   
-
-Now we will try to see if financial indicators affect the probability of company's default in line with relationships known in literature. We will only interpret signs of coefficiants that are statistically significant:
-
-* TLTA - the sign of the coefficient is positive, what was expected
-* WCTA - the sign of the coefficient is negative, what was expected
-* NITA - the sign of the coefficient is positive, what was not expected
-* INONE - the sign of the coefficient is negative, what was expected
-* FUTL - the sign of the coefficient is negative, what was expected
-* CHSALES - the sign of the coefficient is negative, what was expected
-
-Not every coefficient sign is in line with the literature. A possible explanation for that is that there is some significant variable that we omitted or that there is some interaction that we missed.
+Above we present the comparison of models tested in this analysis. Where the number four is our final model.    
 
 ## 4.6. Marginal effects for the final model
 
@@ -386,125 +372,11 @@ The last one measure used is McFadden's:
 ```{r, echo = F}
 PseudoR2(myprobit_final)
 ```
-What does this value tell us about the predictive accuracy of our model? According to McFadden when his Pseudo R^2 is in range 0.2-0.4 it means a really good fit. And it is normal situation that this type of R^2 does not "behave" as well as this one from linear regression (McFadden, 1977)
+What does this value tell us about the predictive accuracy of our model? According to McFadden when his Pseudo R^2 is in range 0.2-0.4 it means a really good fit. And it is normal situation that this type of R^2 does not "behave" as well as this one from linear regression (McFadden, 1977, p. 34)
 
-## 4.10. Hosmer-Lemeshow test
+## Hypotheses verification
 
-The Hosmer-Lemeshow is useful in assesing goodness of fit test for logistic regression.
-
-```{r, echo=FALSE}
-hl <- hoslem.test(myprobit_final$y, fitted(myprobit_final), g=10)
-hl
-```
-P-value of the test is 0.2428 which is above our significance level. This means that we can not rejest null hypothesis that the model is correctly specified.
-
-## 4.11. Testing hypotheses
-
-In the Introduction we have introduced two research questions. Therefore the hypotheses testing which comes from this questions is split for two sections. 
-
-### 4.11.1.Hypothesis 1 testing
-We asked ourselves Is Ohlson's type model still a good predictor of financial default. Can it extract the whole data potential? The null hypothesis will be than:
-
-> __H0__: *Modified Ohlson model is the best corporate bankruptcy predictor for a data we have*  
-
-> __H1__: *The other model can be created to suit the data better* 
-
-After getting a correct form of the model we are almost able to verify this hypothesis. However there is an obvious question how it should be obtained. We decided to create another model but which does not use any of Ohlson's assumptions but just uses the potential of the whole dataset. To create the new model we at first run a probit model with one covariate at a time to limit the number of independent variables. This way we get rid of 16 variables. The next step was dropping highly correlated variables. After that we were left with data with 34 independent variables. The final step was to run the Probit model on the modified dataset and than we used stepwise regression to find the most valuable features. The obtained model is presented below. 
-
-```{r echo = F, warning=FALSE, results = 'hide'}
-data1 <- read.csv2("imputedData.csv")
-missing_d <- data1[rowSums(is.na(data1))>0,]
-sum(missing_d$class)
-data1 <- data1[rowSums(is.na(data1))==0,]
-coln <- as.character(read.csv2("column_names_1.csv", header = FALSE)$V2)
-coln <- c(coln, "BANKRUPTCY")
-colnames(data1) <- coln
-data1$INONE <- ifelse(NITA>0, 1, 0)
-data1$OENEG <- ifelse(TLTA>=1, 1, 0)
-y_3 <- data1$BANKRUPTCY
-data1$BANKRUPTCY <- NULL
-X_3 <- data1
-
-## To see if we can limit number of features in our model first we decided to run Logit regression with one covariate at a time. 
-## If the pvalue of the variable is > 0.25 we will drop it. 
-
-selected_names <- c()
-selected_names <- lapply(names(X_3),function(name){
-one_cov <- glm(y_3 ~ X_3[,name], family=binomial(link= "probit"))
-
-if (as.numeric(summary(one_cov)$coefficients[,4][2]) < 0.25){
-  selected_names <- c(selected_names, name)
-}
-
-})
-
-selected_names <- unlist(selected_names)
-data1 <- data1 %>% dplyr::select(selected_names)
-
-## In this way we extracted 48 variables which pvalues for the regression y ~ variable[i] were less than 0,25
-## It helped us to reduce the dataset by 17 variables
-
-## The another approach to limit number of variables is to drop those which are highly correlated. 
-## After the analysis of correlation data we removed next 15 variables
-corr <- round(cor(X_3), 1)
-to_drop <- findCorrelation(corr, cutoff = 0.9, verbose = FALSE, names = F,
-                exact = ncol(corr) < 100)
-
-data1 <- data1[,-to_drop]
-data1$BANKRUPTCY <- y_3
-
-
-# Fit the full model 
-full.model <- glm(BANKRUPTCY ~.,data = data1, family=binomial(link= "probit"), control = list(maxit = 50))
-# Stepwise regression model we do not run this in markdown cause it takes too much time. We just load this model which was previously calculated and saved
-# step.model <- MASS::stepAIC(full.model, direction = "both", 
-                      # trace = FALSE)
-step.model <- readRDS("step_model.RDS")
-
-
-```
-
-```{r, echo = F, warning = F}
-kable(broom::tidy(summary(step.model)$coefficients), row.names = F) %>% kable_styling(latex_options=c("scale_down", "HOLD_position"))
-```
-
-Having a comparable model we will use Likelihood Ratio Test to see if this comparable model, with 18 variables from which 16 is significant, suits our data better than the Ohlson's type model we created before. 
-
-```{r, echo = T}
-as.data.frame(anova(myprobit_final, step.model, test= "LRT"))
-```
-
-\noindent
-"step.model"" is the model obtained in this subchapter. As it occurs the pvalue of test < 0.05 so we can state that "step.model" fits our data in a better way than Ohlson's model. Therefore we reject **H0**. 
-
-### 4.11.2. Hypothesis 2 testing
-\indent
-To test whether all of betas in our model are jointly significant, we will use likelihood ratio test.
-
-```{r, echo = F}
-with(myprobit_final, pchisq(null.deviance - deviance, df.null - df.residual, lower.tail = FALSE))
-```
-\noindent 
-P-value is close to 0, so we can reject the null hypothesis that model with predictors does not fit significantly better than a model with just an intercept. 
-
-\newpage
-# 5. Results
-\indent 
-Most of our modelling part was focused on building a proper modification of Ohlson's model to adjust it to our dataset but without going far from the original model. The obtained Modified Ohlson's Model performed moderately well. Out of 8 independent variables 6 were significant. Also all the calculated marginal effect and odds ratios had expected signs. The R^2 analysis also provided us with acceptable values. Additionaly the Hosmer-Lamshow test assured us that the model is correctly specified. 
-
-Although all the tests we used on the Modified Ohlson's Model gave us rather positive view at its performance, it failed to pass our main hypothesis that it is the best model to work with such a data as we used. After conducting Loglikelihood test which compared Modified Ohlson's Model with the model based on the whole dataset, created with computational tools it occured that the Modified Ohlson's Model fits the data worse than the second model. Additionaly it is important to indicate here that the process of creating the second model was strongly simplified and it did not incorporated any theoretical analysis and was based only on computational feature selection techniques.  
-
-\newpage
-# 6. Conclusions
-
-\indent
-In our analysis, we concluded that an econometrics model can be useful in predicting whether a company will default next year. What's more, the relationships between financial indicators and the probability of default are in line with the dependencies known in litearature. 
-
-Obviously, the shortcomings of model also occured. Ohlson created his model at the beginning of 80's so he was not able to use computational tools we can apply today. That might be the answer why Modified Ohlson's Model lost in test of fitting our data with the model created in 4.11. But it doesn't mean that Modified Ohlson's Model we created is just worse. What has to be said it is the fact that Ohlson's Model has strong theoretical basis. Also the limited number of variables make it a fast tool. This surely can't be said about the model from 4.11. which is based on stepwise regression feature selection what means that this model is really computationally demanding. Even on our rather small dataset it took this model a long time to get to final state. It means that it can be practically inapplicable when used with bigger datasets. 
-
-To summarize the whole analysis we can say that Ohlson Model still can be valuable in the area of corporate bankruptcy prediction. However with the awareness that its coefficients should always be adjusted to modern data (Grice & Dugan, 2003). In the next studies in this area it would be useful to consider bulding partly "synthetic" Ohlson Model, which would include all the variables from the original model and a reasonable number of additional variables selected with some computational tool (e.g. stepwise regression). This approach might unleash the potential of Ohlson's Model in current analysis. 
-
-
+## Tests
 \newpage
 \begin{thebibliography}{9}
 
