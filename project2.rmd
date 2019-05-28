@@ -47,7 +47,7 @@ Some imporant works in the area of bankruptcy prediction were already mentioned.
 \newpage
 # 2. Literature Review
 
-In the introduction few important works which challenged the problem of prediction of corporate bankruptcy were briefly mentioned. It all started with Altman's Multidemsional Analysis (Altman, 1968). Later numerous different ideas were introduce to solve the task of a proper prediction of bankruptcies. The works which are important for our analysis are ones which incorporate Logit (Ohlson, 1980) and Probit (Zmijewski, 1984). Obviously, it is important to state that those approaches are rather old and they do not keep up to the newest strategies. Currently, where the computing power is huge, few modern techniques of bankruptcy prediction were proposed: 
+In the introduction few important works which challenged the problem of prediction of corporate bankruptcy were briefly mentioned. It all started with Altman's Multidemsional Analysis (Altman, 1968). Later numerous different ideas were introduced to solve the task of a proper prediction of bankruptcies. The works which are important for our analysis are ones which incorporate Logit (Ohlson, 1980) and Probit (Zmijewski, 1984). Obviously, it is important to state that those approaches are rather old and they do not keep up to the newest strategies. Currently, where the computing power is huge, few modern techniques of bankruptcy prediction were proposed: 
 
 1. Rough Sets (Dimitras et al., 1999)
 2. Evolutionary Programming (Zhang et al., 2013)
@@ -364,7 +364,7 @@ summary(aux.reg)
 
 ## 4.9. Intepretation of R squared
 
-When dealing with regression where the dependent variable is not continous the interpretation of R-squared is not straightforward as in case of linear regression. To get a wider understanding of how the model we prepared fits our data we will use three different pseudo R-squared measures: Count R^2 Nagelkerke/Cragg & Uhler R^2 and McFadden's
+When dealing with regression where the dependent variable is not continous the interpretation of R-squared is not straightforward as in case of linear regression. To get a wider understanding of how the model we prepared fits our data we will use three different pseudo R-squared measures: Count R^2, Nagelkerke/Cragg & Uhler R^2 and McFadden's
 
 1. Count R^2 is equal
 ```{r, echo = F}
@@ -374,9 +374,9 @@ countR2<-function(m) mean(m$y==round(m$fitted.values))
 
 countR2(myprobit_final)
 ```
-We get a really high value of Count R^2 what tells us what percent of dependent variable's value we can predict with coefficients we got from the model. However the high value is optimistic, it is unfortunatelly the limitation of Count R^2 that if one value of dependent variable occurs much more often than another one the R^2 will surely be high (Strawiński). That is why some other measures should be introduced.
+We get a really high value of Count R^2. That tells us what percent of dependent variable's value we can predict with coefficients we got from the model. However the high value is optimistic, it is unfortunatelly the limitation of Count R^2 that if one value of dependent variable occurs much more often than another one the R^2 will surely be high (Strawiński). That is why some other measures should be introduced.
 
-As the next value we decided to use Nagelkere's Pseudo R^2 because of its [0,1] interval which makes it comfortable to interpret:
+\noindent As the next value we decided to use Nagelkere's Pseudo R^2 because of its [0,1] interval which makes it comfortable to interpret:
 ```{r, echo = F}
 PseudoR2(myprobit_final,which = "Nagelkerke")
 ```
@@ -386,7 +386,7 @@ The last one measure used is McFadden's:
 ```{r, echo = F}
 PseudoR2(myprobit_final)
 ```
-What does this value tell us about the predictive accuracy of our model? According to McFadden when his Pseudo R^2 is in range 0.2-0.4 it means a really good fit. And it is normal situation that this type of R^2 does not "behave" as well as this one from linear regression (McFadden, 1977)
+\indent What does this value tell us about the predictive accuracy of our model? According to McFadden when his Pseudo R^2 is in range 0.2-0.4 it means a really good fit (McFadden, 1977). 
 
 ## 4.10. Hosmer-Lemeshow test
 
@@ -396,20 +396,20 @@ The Hosmer-Lemeshow is useful in assesing goodness of fit test for logistic regr
 hl <- hoslem.test(myprobit_final$y, fitted(myprobit_final), g=10)
 hl
 ```
-P-value of the test is 0.2428 which is above our significance level. This means that we can not rejest null hypothesis that the model is correctly specified.
+P-value of the test is 0.2428 which is above our significance level. This means that we can not reject null hypothesis that the model is correctly specified.
 
 ## 4.11. Testing hypotheses
 
 In the Introduction we have introduced two research questions. Therefore the hypotheses testing which comes from this questions is split for two sections. 
 
 ### 4.11.1.Hypothesis 1 testing
-We asked ourselves Is Ohlson's type model still a good predictor of financial default. Can it extract the whole data potential? The null hypothesis will be than:
+We asked ourselves is Ohlson's type model still a good predictor of financial default. Can it extract the whole data potential? The null hypothesis will be then:
 
 > __H0__: *Modified Ohlson model is the best corporate bankruptcy predictor for a data we have*  
 
 > __H1__: *The other model can be created to suit the data better* 
 
-After getting a correct form of the model we are almost able to verify this hypothesis. However there is an obvious question how it should be obtained. We decided to create another model but which does not use any of Ohlson's assumptions but just uses the potential of the whole dataset. To create the new model we at first run a probit model with one covariate at a time to limit the number of independent variables. This way we get rid of 16 variables. The next step was dropping highly correlated variables. After that we were left with data with 34 independent variables. The final step was to run the Probit model on the modified dataset and than we used stepwise regression to find the most valuable features. The obtained model is presented below. 
+After getting a correct form of the model we are almost able to verify this hypothesis. However there is an obvious question how it should be conducted. We decided to create another model but which does not use any of Ohlson's assumptions but just uses the potential of the whole dataset. To create the new model we at first run a probit model with one covariate at a time to limit the number of independent variables. This way we get rid of 16 variables. The next step was dropping highly correlated variables. After that we were left with data with 34 independent variables. The final step was to run the Probit model on the modified dataset and than we used stepwise regression to find the most valuable features. The obtained model's summary is presented below. 
 
 ```{r echo = F, warning=FALSE, results = 'hide'}
 data1 <- read.csv2("imputedData.csv")
@@ -465,7 +465,7 @@ step.model <- readRDS("step_model.RDS")
 ```
 
 ```{r, echo = F, warning = F}
-kable(broom::tidy(summary(step.model)$coefficients), row.names = F) %>% kable_styling(latex_options=c("scale_down", "HOLD_position"))
+kable(broom::tidy(summary(step.model)$coefficients), row.names = FALSE, caption = "",booktabs = T) %>% kable_styling(latex_options=c("scale_down", "HOLD_position"))
 ```
 
 Having a comparable model we will use Likelihood Ratio Test to see if this comparable model, with 18 variables from which 16 is significant, suits our data better than the Ohlson's type model we created before. 
@@ -502,7 +502,7 @@ In our analysis, we concluded that an econometrics model can be useful in predic
 
 Obviously, the shortcomings of model also occured. Ohlson created his model at the beginning of 80's so he was not able to use computational tools we can apply today. That might be the answer why Modified Ohlson's Model lost in test of fitting our data with the model created in 4.11. But it doesn't mean that Modified Ohlson's Model we created is just worse. What has to be said it is the fact that Ohlson's Model has strong theoretical basis. Also the limited number of variables make it a fast tool. This surely can't be said about the model from 4.11. which is based on stepwise regression feature selection what means that this model is really computationally demanding. Even on our rather small dataset it took this model a long time to get to final state. It means that it can be practically inapplicable when used with bigger datasets. 
 
-To summarize the whole analysis we can say that Ohlson Model still can be valuable in the area of corporate bankruptcy prediction. However with the awareness that its coefficients should always be adjusted to modern data (Grice & Dugan, 2003). In the next studies in this area it would be useful to consider bulding partly "synthetic" Ohlson Model, which would include all the variables from the original model and a reasonable number of additional variables selected with some computational tool (e.g. stepwise regression). This approach might unleash the potential of Ohlson's Model in current analysis. 
+To summarize the whole analysis we can say that Ohlson Model still can be valuable in the area of corporate bankruptcy prediction. However with the awareness that its coefficients should always be adjusted to modern data (Grice & Dugan, 2003). In the next studies in this area it would be useful to consider bulding partly "synthetic" Ohlson Model, which would include all the variables from the original model and a reasonable number of additional variables selected with some computational tool (e.g. stepwise regression). This approach might unleash the potential of Ohlson's Model in analysing modern problems.  
 
 
 \newpage
